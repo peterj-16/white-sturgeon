@@ -8,10 +8,10 @@ library(tidyverse)
 
 # read in genotypes
 offspring_genos <- read_excel("your_offspring_genotypes")
-adult_genos <- read_excel("~/Desktop/SturgeonProject/GTseq/adults/adults_all.xlsx", sheet = "all_dups_removed", col_types = "text")
+adult_genos <- read_excel("your_adult_genotypes")
 
 # read in adult x offspring relationship coefficients
-adult_juv_RCs <- read.delim("~/Desktop/SturgeonProject/GTseq/PA_all/adult_juv_RC_all.txt", sep = " ")
+adult_juv_RCs <- read.delim("your_adultXoffspring_relationship_coefficients")
 
 # Initialize an empty dataframe to store pair-wise mismatches
 adult_juv_pair_mismatches <- data.frame(offspring = character(), adult = character(), mismatches = numeric(), RC = numeric(), stringsAsFactors = FALSE)
