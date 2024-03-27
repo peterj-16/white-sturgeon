@@ -10,8 +10,8 @@ library(tidyverse)
 offspring_genos <- read_excel("your_offspring_genotypes")
 adult_genos <- read_excel("your_adult_genotypes")
 
-# read in adult x offspring relationship coefficients
-adult_juv_RCs <- read.delim("your_adultXoffspring_relationship_coefficients")
+# read in adult x offspring relationship coefficients (adult columns X offspring rows)
+adult_juv_RCs <- read.delim("your_relationship_coefficients")
 
 # Initialize an empty dataframe to store pair-wise mismatches
 adult_juv_pair_mismatches <- data.frame(offspring = character(), adult = character(), mismatches = numeric(), RC = numeric(), stringsAsFactors = FALSE)
