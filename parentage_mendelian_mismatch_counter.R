@@ -1,25 +1,31 @@
+# Written by Peter Johnson. 2024. 
+
 library(readxl)
 library(dplyr)
 library(tidyverse)
 
-# COUNTS MENDELIAN MISMATCHES BETWEEN POSSIBLE PARENT-OFFSPRING PAIRS AND TRIOS (2 PARENTS - 1 OFFSPRING)
-# FOR TETRAPLOID SNP GENOTYPES 
+# COUNTS MENDELIAN MISMATCHES OF POSSIBLE PARENT-OFFSPRING PAIRS AND TRIOS (2 PARENTS - 1 OFFSPRING)
+# FOR TETRAPLOID SNP GENOTYPES
 # REFERENCES RELATIONSHIP COEFFICIENTS
+
 
 # read in genotypes
 offspring_genos <- read_excel("your_offspring_genotypes")
 adult_genos <- read_excel("your_adult_genotypes")
 
-# read in adult x offspring relationship coefficients (adult columns X offspring rows)
+# read in adult x offspring relationship coefficients (adult columns X juvenile rows)
 adult_juv_RCs <- read.delim("your_relationship_coefficients")
 
-# Initialize an empty dataframe to store pair-wise mismatches
+# Initialize an empty dataframe to store pair mismatches
 adult_juv_pair_mismatches <- data.frame(offspring = character(), adult = character(), mismatches = numeric(), RC = numeric(), stringsAsFactors = FALSE)
 
-# Function to check if a genotype is missing ('0')
+# Function to check if a genotype is missing 
 is_missing <- function(x) any(x == "0")
 
-# identify possible adult-juvenile pairs from RCs and count their Mendelian mismatches
+# initialize list for pair mismatch SNPs
+pair_mismatch_SNPs <- list()
+
+# find number of mismatches for adult-juvenile pairs; fill 'adult_juv_pair_mismatches' dataframe
 for (i in 1:(nrow(offspring_genos))) {
   offspring <- offspring_genos$Sample[i]
   offspring_genotype <- offspring_genos[i, -c(1)]
@@ -28,9 +34,12 @@ for (i in 1:(nrow(offspring_genos))) {
     adult <- adult_genos$Sample[j]
     adult_genotype <- adult_genos[j, -c(1)]
     
-    # Check the relationship coefficient condition (minimum RC seen in our known parent-offspring relationships)
+    # Check the relationship coefficient condition (minimum RC seen in known parent-offspring relationships)
     RC <- adult_juv_RCs[i, j]
     if (RC > 0.34) {
+      
+      # initialize mismatch vector per pair
+      mismatch_snps <- character(0)
       
       # Initialize mismatch count for each pair
       mismatch_count <- 0
@@ -46,17 +55,20 @@ for (i in 1:(nrow(offspring_genos))) {
         shared_alleles <- sum(strsplit(as.character(offspring_genos[i, snp]), "")[[1]] %in% strsplit(as.character(adult_genos[j, snp]), "")[[1]])
         if (shared_alleles < 2) {
           mismatch_count <- mismatch_count + 1
+          mismatch_snps <- c(mismatch_snps, snp)
         }
       }
       
       # Add the result to the adult_offspring_mismatches dataframe
       adult_juv_pair_mismatches <- rbind(adult_juv_pair_mismatches, data.frame(offspring = offspring, adult = adult, mismatches = mismatch_count, RC = RC))
+      # Add mismatched SNPs per pair to final list
+      pair_mismatch_SNPs[[paste(offspring, adult, sep = ".")]] <- mismatch_snps
     }
   }
 }
 pairs <- adult_juv_pair_mismatches
 
-# filter adult-juv pairs more conservatively 
+# filter adult-juv pairs conservatively 
 pairs_filtered <- pairs[pairs$mismatches <= 3 & pairs$RC >= 0.4, ]
 row.names(pairs_filtered) <- NULL
 
@@ -64,18 +76,15 @@ row.names(pairs_filtered) <- NULL
 split_genos <- function(genotype) {
   n <- length(genotype)
   poss_splits <- character(n * (n - 1) / 2)
-  
   k <- 1
   for (i in 1:(n - 1)) {
     for (j in (i + 1):n) {
       split_1 <- paste0(genotype[i], genotype[j])
       split_2 <- paste0(genotype[setdiff(1:n, c(i, j))], collapse = "")
-      
       poss_splits[k] <- paste(split_1, split_2, sep = "_")
       k <- k + 1
     }
   }
-  
   return(poss_splits[1:(k-1)])
 }
 
@@ -95,8 +104,10 @@ pairs_trios <- data.frame(
 # populate trios df w/ all possible pairs from pair info (any 2 pairs w/ same offspring)
 for (i in 1:(nrow(pairs_filtered) - 1)) {
   for (j in (i + 1):nrow(pairs_filtered)) {
+    
     # Check if the offspring strings are the same
     if (pairs_filtered$offspring[i] == pairs_filtered$offspring[j]) {
+      
       # Create a new row for pairs_trios_noMM
       new_row <- data.frame(
         offspring = pairs_filtered$offspring[i],
@@ -143,17 +154,16 @@ for (i in 1:nrow(pairs_trios)) {
 # initialize list for SNPs with mismatches at trio level
 trio_mismatch_SNPs <- list()
 
-# count trio mismatches for each trio and add to pairs_trios df; add mismatch SNPs to list
+# count trio mismatches for each trio and add to pairs_trios df
 for (trio_data in trio_genotypes_list) {
-  mismatched_snps <- character(0)
+  mismatch_snps <- character(0)
   offspring_genotype <- trio_data[1, ]
   first_candidate_genotype <- trio_data[2, ]
   second_candidate_genotype <- trio_data[3, ]
   
   # Initialize mismatch count and SNPs list for each trio
   mismatch_count <- 0
-  snps_with_mismatch <- character(0)
-  
+    
   # Iterate through each SNP
   for (snp in names(trio_data)[grep("^Atr", names(trio_data))]) {
     # Skip SNP if any missing genotypes are present
@@ -189,7 +199,7 @@ for (trio_data in trio_genotypes_list) {
     # If none of the splits satisfy the condition, it's a mismatch
     if (mismatch_found) {
       mismatch_count <- mismatch_count + 1
-      snps_with_mismatch <- c(snps_with_mismatch, snp)
+      mismatch_snps <- c(mismatch_snps, snp)
     }
   }
   
@@ -203,6 +213,5 @@ for (trio_data in trio_genotypes_list) {
     pairs_trios$trio_mismatches[trio_index] <- mismatch_count
   }
   
-  mismatched_snps <- c(mismatched_snps, snps_with_mismatch)
-  trio_mismatch_SNPs[[paste(offspring_genotype$Sample, first_candidate_genotype$Sample, second_candidate_genotype$Sample, sep = "__")]] <- mismatched_snps
+  trio_mismatch_SNPs[[paste(offspring_genotype$Sample, first_candidate_genotype$Sample, second_candidate_genotype$Sample, sep = ".")]] <- mismatch_snps
 }
