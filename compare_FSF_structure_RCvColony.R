@@ -1,4 +1,5 @@
 # This function reconstructs full-sibling family structure from relationship coefficients and compares it with full-sib family structures from multiple Colony BestConfig files. Relationship coefficients should be in sample matrix (all X all) and a full-sibship threshold value must be input.
+# Peter Johnson 2024
 
 library(readxl)
 library(tidyverse)
@@ -145,5 +146,5 @@ FS_RC_threshold <- 0.42
 BestConfigs <- list.files(path = "~/path/to/your/BestConfigs", full.names = TRUE)
 RCs <- read_excel("~/path/to/your/RCs.xlsx", sheet = "RCs")
 
-# Execute script. Gives similarity proportion between RC structure and each Colony structure, and the average among them
+# Execute script. Gives similarity proportion between the RC structure and each Colony structure, and the average among all comparisons
 RC_Col_similarity <- compare_Col_RC_FSFs(RCs, BestConfigs, FS_RC_threshold)
