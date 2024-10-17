@@ -72,7 +72,7 @@ process_all_BestConfigs <- function(directory_path) {
 
 ######
 # Apply process_all_BestConfigs (which uses make_relationship_table) to directory of BestConfig files
-directory_path <- "~/Desktop/SturgeonProject/GTseq/0323/BY15_WAN/BestConfigs"
+directory_path <- "~/path/to/your/BestConfigs"
 process_all_BestConfigs(directory_path)
 ######
 
