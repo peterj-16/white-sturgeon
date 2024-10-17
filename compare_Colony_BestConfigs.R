@@ -1,5 +1,5 @@
 # This script compares BestConfig files from replicate Colony runs for sibship inference, quantifying similarity as proportion of matching pairwise relationships. This is done by making a relationship table for each BestConfig file, which records each pairwise relationship as full-siblings (FS), half-siblings (HS), or unrelated (UR), and comparing each pair of relationship tables.
-# Peter Johnson
+# Peter Johnson 2024
 
 library(tidyverse)
 
