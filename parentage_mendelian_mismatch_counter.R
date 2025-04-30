@@ -4,7 +4,6 @@
 # REFERENCES RELATIONSHIP COEFFICIENTS
 
 library(readxl)
-library(dplyr)
 library(tidyverse)
 
 
